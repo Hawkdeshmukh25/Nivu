@@ -148,6 +148,13 @@ export default function OurUniverse() {
 
   const toggleFavorite = (id: string) => {
     setMemories(prev => prev.map(m => m.id === id ? { ...m, isFavorite: !m.isFavorite } : m));
+    setSelectedGroup(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        items: prev.items.map(m => m.id === id ? { ...m, isFavorite: !m.isFavorite } : m)
+      };
+    });
   };
 
   return (
