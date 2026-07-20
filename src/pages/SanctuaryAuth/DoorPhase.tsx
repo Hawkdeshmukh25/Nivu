@@ -116,11 +116,8 @@ export default function DoorPhase({ onOpen }: Props) {
             transition={{ duration: 2, delay: 1.5 }}
             className="absolute inset-0 flex flex-col items-center justify-center z-30 pointer-events-none bg-black/40 backdrop-blur-sm"
           >
-            <p className="text-xl md:text-2xl text-brand-muted uppercase tracking-[0.3em] font-medium mb-4">
-              Welcome back
-            </p>
-            <h1 className="text-5xl md:text-7xl font-serif text-brand-beige italic drop-shadow-2xl">
-              Nivu.
+            <h1 className="text-4xl md:text-6xl font-serif text-brand-beige italic drop-shadow-2xl">
+              Welcome back.
             </h1>
           </motion.div>
         )}
