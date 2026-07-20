@@ -20,6 +20,18 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data().value as T;
+        
+        // Anti-Wipe Protection: If local data is significantly larger, push local to cloud instead of downloading!
+        const localRaw = window.localStorage.getItem(key);
+        if (localRaw) {
+          const cloudDataStr = JSON.stringify(data);
+          if (localRaw.length > cloudDataStr.length + 50) {
+            console.log(`Local data for ${key} is larger. Pushing to cloud to prevent wipe.`);
+            setDoc(docRef, { value: JSON.parse(localRaw) }, { merge: true });
+            return;
+          }
+        }
+
         setStoredValue(data);
         window.localStorage.setItem(key, JSON.stringify(data));
       }

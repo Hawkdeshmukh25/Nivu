@@ -28,6 +28,17 @@ export function useJournalStorage() {
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data().value as JournalEntry[];
+        
+        const localRaw = window.localStorage.getItem(JOURNAL_KEY);
+        if (localRaw) {
+          const cloudDataStr = JSON.stringify(data);
+          if (localRaw.length > cloudDataStr.length + 50) {
+            console.log(`Local data for ${JOURNAL_KEY} is larger. Pushing to cloud to prevent wipe.`);
+            setDoc(docRef, { value: JSON.parse(localRaw) }, { merge: true });
+            return;
+          }
+        }
+
         setEntries(data);
         localStorage.setItem(JOURNAL_KEY, JSON.stringify(data));
       }
