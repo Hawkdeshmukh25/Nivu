@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { db } from '../config/firebase';
 
 export interface JournalEntry {
   id: string;
@@ -9,15 +11,36 @@ export interface JournalEntry {
   isLocked: boolean;
 }
 
+const JOURNAL_KEY = 'mixed_feelings_journal';
+
 export function useJournalStorage() {
-  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [entries, setEntries] = useState<JournalEntry[]>(() => {
+    try {
+      const saved = localStorage.getItem(JOURNAL_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
 
   useEffect(() => {
-    const saved = localStorage.getItem('mixed_feelings_journal');
-    if (saved) {
-      setEntries(JSON.parse(saved));
-    }
+    const docRef = doc(db, "sync_data", JOURNAL_KEY);
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data().value as JournalEntry[];
+        setEntries(data);
+        localStorage.setItem(JOURNAL_KEY, JSON.stringify(data));
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
+
+  const saveEntriesAndSync = (newEntries: JournalEntry[]) => {
+    setEntries(newEntries);
+    localStorage.setItem(JOURNAL_KEY, JSON.stringify(newEntries));
+    setDoc(doc(db, "sync_data", JOURNAL_KEY), { value: newEntries }, { merge: true }).catch(console.error);
+  };
 
   const saveEntry = (entry: Omit<JournalEntry, 'id' | 'date' | 'time'>) => {
     const newEntry: JournalEntry = {
@@ -29,7 +52,7 @@ export function useJournalStorage() {
     
     setEntries((prev) => {
       const updated = [newEntry, ...prev];
-      localStorage.setItem('mixed_feelings_journal', JSON.stringify(updated));
+      saveEntriesAndSync(updated);
       return updated;
     });
   };
@@ -37,7 +60,7 @@ export function useJournalStorage() {
   const deleteEntry = (id: string) => {
     setEntries((prev) => {
       const updated = prev.filter(e => e.id !== id);
-      localStorage.setItem('mixed_feelings_journal', JSON.stringify(updated));
+      saveEntriesAndSync(updated);
       return updated;
     });
   };
@@ -45,7 +68,7 @@ export function useJournalStorage() {
   const toggleLock = (id: string) => {
     setEntries((prev) => {
       const updated = prev.map(e => e.id === id ? { ...e, isLocked: !e.isLocked } : e);
-      localStorage.setItem('mixed_feelings_journal', JSON.stringify(updated));
+      saveEntriesAndSync(updated);
       return updated;
     });
   };
