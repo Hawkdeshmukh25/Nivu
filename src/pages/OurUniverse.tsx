@@ -80,10 +80,7 @@ export default function OurUniverse() {
     setIsAddModalOpen(false);
   };
 
-  useEffect(() => {
-    // Silently remove the specific AI placeholder frame from user's localStorage if it exists
-    setMemories(prev => prev.filter(m => !m.mediaUrls.includes('/6eb4d85a-598e-4639-a5a2-cd10ad8aebdd.png')));
-  }, [setMemories]);
+  // Removed dangerous auto-filter on mount
 
   const groupedMemories = useMemo(() => {
     const groups: Record<string, Memory[]> = {};
